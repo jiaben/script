@@ -12,12 +12,12 @@ def get_appstop_data(url):
 	user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'  
 	headers={ 'User-Agent' : user_agent }  
 	req=urllib2.Request(myurl, headers = headers)  
-	myResponse=urllib2.urlopen(req)  
+	resultXml = ''
 	try:
-		myResponse = urllib2.urlopen(req)
+		myResponse = urllib2.urlopen(req, timeout = 30)
+		resultXml = myResponse.read()
 	except urllib2.HTTPError, e:
 		print e.fp.read()    
-	resultXml = myResponse.read()
 	return resultXml
 
 def get_attrvalue(node, attrname):
@@ -114,12 +114,12 @@ def marge_url():
 			#	url_list.append(urlStr)
 	return url_list
 
+conn = MySQLdb.connect(host="localhost", user="app_gathering", passwd="app_gathering", db="app_new_application",charset='utf8')
 #执行Sql操作
 def DbSql(sql,type, param=None):
 	try:
+		cursor = conn.cursor()
 		if sql:
-			conn = MySQLdb.connect(host="localhost", user="app_gathering", passwd="app_gathering", db="app_new_application",charset='utf8')
-			cursor = conn.cursor()
 			if type == 'select':
 				cursor.execute(sql)    
 				data = cursor.fetchone()
@@ -130,7 +130,6 @@ def DbSql(sql,type, param=None):
 				data = 'nokey'
 			cursor.close()
 			conn.commit()
-			conn.close()
 			return data
 		else:
 			return
@@ -181,7 +180,7 @@ class MyThread(threading.Thread):
 				#添加数据库
 				addAppRank(app_arr,startTime)
 				mutex.release()
-				time.sleep(1)
+				time.sleep(0.1)
 			else:
 				break
 
@@ -195,3 +194,5 @@ if __name__ == '__main__':
 		t.start()
 	for h in threads:
 		h.join()
+
+	conn.close()
